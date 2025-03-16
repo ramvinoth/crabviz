@@ -4,7 +4,8 @@
     "module": "commonjs",
     "declaration": true,
     "outDir": "./dist",
-    "rootDir": "./src",    "strict": true,
+    "rootDir": "./src",
+    "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "composite": true,
@@ -13,7 +14,12 @@
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "allowJs": false,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "declarationMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": ["*", "src/*"]
+    }
   },
   "include": [
     "src/**/*.ts"

@@ -1,0 +1,88 @@
+{
+  "name": "codetwin",
+  "version": "0.4.0",
+  "description": "Interactive call graph generator",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "clean": "rimraf dist",
+    "prebuild": "npm run clean",
+    "build": "tsc -p tsconfig.json",
+    "test": "jest",
+    "lint": "eslint src --ext .ts",
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "dependencies": {
+    "@types/node": "^16.0.0",
+    "@viz-js/viz": "^3.4.0",
+    "vscode-languageclient": "^8.0.0",
+    "vscode-languageserver": "^8.0.0",
+    "vscode-languageserver-protocol": "^3.17.5"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.2.11",
+    "@typescript-eslint/eslint-plugin": "^5.0.0",
+    "@typescript-eslint/parser": "^5.0.0",
+    "@types/vscode": "^1.60.0",
+    "eslint": "^8.0.0",
+    "jest": "^29.2.11",
+    "rimraf": "^3.0.2",
+    "ts-jest": "^29.2.6",
+    "typescript": "^5.8.2"
+  },
+  "categories": [
+    "Visualization",
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onCommand:codetwin.visualize",
+    "onCommand:codetwin.visualizeFile",
+    "onCommand:codetwin.visualizeWorkspace"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "codetwin.visualize",
+        "title": "codetwin: Visualize Current File"
+      },
+      {
+        "command": "codetwin.visualizeFile",
+        "title": "codetwin: Visualize Selected File"
+      },
+      {
+        "command": "codetwin.visualizeWorkspace",
+        "title": "codetwin: Visualize Workspace"
+      }
+    ],
+    "configuration": {
+      "title": "codetwin",
+      "properties": {
+        "codetwin.includePrivate": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include private symbols in visualization"
+        },
+        "codetwin.includeTests": {
+          "type": "boolean",
+          "default": false,
+          "description": "Include test files in visualization"
+        },
+        "codetwin.includeImplementation": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include implementation details in visualization"
+        },
+        "codetwin.languages": {
+          "type": "array",
+          "default": ["go", "rust", "java", "python", "typescript"],
+          "description": "List of languages to support"
+        }
+      }
+    }
+  }
+}

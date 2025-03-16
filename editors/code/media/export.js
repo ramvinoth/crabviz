@@ -1,7 +1,7 @@
 function exportSVG() {
   const svg = document.querySelector("svg").cloneNode(true);
 
-  svg.appendChild(document.getElementById("crabviz_style").cloneNode(true));
+  svg.appendChild(document.getElementById("codetwin_style").cloneNode(true));
   svg.insertAdjacentHTML(
     "beforeend",
     "<style>:is(.cell, .edge) { pointer-events: none; }</style>"

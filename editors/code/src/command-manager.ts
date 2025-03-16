@@ -23,6 +23,8 @@ export class CommandManager {
   }
 
   public async generateCallGraph(contextSelection: vscode.Uri, allSelections: vscode.Uri[]) {
+    console.log('Starting generateCallGraph command', { contextSelection, allSelections });
+
 		let cancelled = false;
 
 		// selecting no file is actually selecting the entire workspace
@@ -55,6 +57,8 @@ export class CommandManager {
 			return classifer.classifyFilesByLanguage(allSelections, token);
 		});
 
+		console.log('Files to process:', files.size);
+
 		if (cancelled) {
 			return;
 		}
@@ -76,21 +80,29 @@ export class CommandManager {
 			return;
 		}
 
-		vscode.window.withProgress({
+		return await vscode.window.withProgress({
 			location: vscode.ProgressLocation.Notification,
-			title: "Crabviz: Generating call graph",
+			title: "CodeTwin: Generating call graph",
 			cancellable: true,
-		}, (progress, token) => {
-			token.onCancellationRequested(() => cancelled = true);
+		}, async (progress, token) => {
+			console.log('Starting graph generation with progress');
+			try {
+				const generator = new Generator(root.uri, lang);
+				const svg = await generator.generateCallGraph(files.get(lang)!, progress, token);
+				console.log('Graph generation completed, SVG length:', svg?.length);
+				
+				if (!svg) {
+					console.error('No SVG generated');
+					return;
+				}
 
-			const generator = new Generator(root.uri, lang);
-			return generator.generateCallGraph(files.get(lang)!, progress, token);
-		})
-		.then(svg => {
-			if (cancelled) { return; }
-
-			const panel = new CallGraphPanel(this.context.extensionUri);
-			panel.showCallGraph(svg, false);
+				const panel = new CallGraphPanel(this.context.extensionUri);
+				panel.showCallGraph(svg, false);
+				console.log('Call graph displayed in panel');
+			} catch (error) {
+				console.error('Error generating call graph:', error);
+				vscode.window.showErrorMessage(`Failed to generate call graph: ${error}`);
+			}
 		});
 	}
 
@@ -109,7 +121,7 @@ export class CommandManager {
 
 		vscode.window.withProgress({
 			location: vscode.ProgressLocation.Window,
-			title: "Crabviz: Generating call graph",
+			title: "CodeTwin: Generating call graph",
 		}, _ => {
 			return generator.generateFuncCallGraph(uri, anchor, ig);
 		})

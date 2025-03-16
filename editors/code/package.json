@@ -1,75 +1,87 @@
 {
-  "name": "crabviz",
-  "displayName": "Crabviz",
-  "description": "interactive call graph generator",
+  "name": "codetwin",
+  "displayName": "CodeTwin",
+  "description": "Visualize and analyze code dependencies with call graphs",
   "version": "0.4.0",
-  "publisher": "chanhx",
+  "publisher": "ramvinoth",
   "author": {
-    "name": "Chan HoCheung"
+    "name": "Ram Vinoth"
   },
   "icon": "media/icon.png",
   "repository": {
-    "url": "https://github.com/chanhx/crabviz"
+    "url": "https://github.com/ramvinoth/codetwin"
   },
   "engines": {
-    "vscode": "^1.83.0"
+    "vscode": "^1.60.0"
   },
   "categories": [
-    "Programming Languages",
-    "Visualization"
+    "Visualization",
+    "Programming Languages"
   ],
   "keywords": [
-    "call graph"
+    "call graph",
+    "code analysis",
+    "visualization"
   ],
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "crabviz.generateCallGraph",
-        "title": "Crabviz: Generate Call Graph"
+        "command": "codetwin.generateCallGraph",
+        "title": "Generate Call Graph",
+        "category": "CodeTwin"
       },
       {
-        "command": "crabviz.generateFuncCallGraph",
-        "title": "Crabviz: Generate Function Call Graph"
+        "command": "codetwin.generateFuncCallGraph",
+        "title": "Generate Function Call Graph",
+        "category": "CodeTwin"
       },
       {
-        "command": "crabviz.exportCallGraph",
+        "command": "codetwin.exportCallGraph",
         "title": "Export Call Graph"
+      },
+      {
+        "command": "codetwin.visualize",
+        "title": "CodeTwin: Visualize Current File"
+      },
+      {
+        "command": "codetwin.visualizeWorkspace",
+        "title": "CodeTwin: Visualize Workspace"
       }
     ],
     "menus": {
       "commandPalette": [
         {
-          "command": "crabviz.generateCallGraph",
+          "command": "codetwin.generateCallGraph",
           "when": "never"
         },
         {
-          "command": "crabviz.generateFuncCallGraph",
+          "command": "codetwin.generateFuncCallGraph",
           "when": "never"
         },
         {
-          "command": "crabviz.exportCallGraph",
+          "command": "codetwin.exportCallGraph",
           "when": "never"
         }
       ],
       "editor/context": [
         {
-          "command": "crabviz.generateFuncCallGraph",
-          "group": "crabviz",
+          "command": "codetwin.generateFuncCallGraph",
+          "group": "codetwin",
           "when": "editorHasCallHierarchyProvider"
         }
       ],
       "explorer/context": [
         {
-          "command": "crabviz.generateCallGraph",
-          "group": "crabviz"
+          "command": "codetwin.generateCallGraph",
+          "group": "codetwin"
         }
       ],
       "webview/context": [
         {
-          "command": "crabviz.exportCallGraph",
-          "when": "webviewId == 'crabviz.callgraph'"
+          "command": "codetwin.exportCallGraph",
+          "when": "webviewId == 'codetwin.callgraph'"
         }
       ]
     }
@@ -88,16 +100,14 @@
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.6",
-    "@types/node": "18.x",
-    "@types/vscode": "~1.83.0",
-    "@typescript-eslint/eslint-plugin": "^7.7.1",
-    "@typescript-eslint/parser": "^7.7.1",
-    "@vscode/test-electron": "^2.3.9",
-    "@wasm-tool/wasm-pack-plugin": "^1.6.0",
+    "@types/node": "^20.11.28",
+    "@types/vscode": "^1.60.0",
+    "@typescript-eslint/eslint-plugin": "^7.2.0",
+    "@typescript-eslint/parser": "^7.2.0",
     "eslint": "^8.57.0",
-    "glob": "^10.3.12",
-    "mocha": "^10.4.0",
-    "ts-loader": "^9.4.2",
+    "glob": "^10.3.10",
+    "mocha": "^10.3.0",
+    "ts-loader": "^9.5.1",
     "typescript": "^5.4.5",
     "webpack": "^5.76.3",
     "webpack-cli": "^5.1.3"

@@ -1,27 +1,35 @@
 import * as vscode from 'vscode';
-
-import { initSync, set_panic_hook } from '../crabviz';
+import { initialize } from 'codetwin';
 import { CallGraphPanel } from './webview';
 import { CommandManager } from './command-manager';
 
+/**
+ * Activates the extension.
+ * 
+ * @param context The extension context.
+ */
 export async function activate(context: vscode.ExtensionContext) {
-	await vscode.workspace.fs.readFile(
-		vscode.Uri.joinPath(context.extensionUri, 'crabviz/index_bg.wasm')
-	).then(bits => {
-		initSync(bits);
-		set_panic_hook();
-	});
+	try {
+		// Initialize codetwin
+		await initialize();
+	} catch (error) {
+		vscode.window.showErrorMessage('Failed to initialize: ' + error);
+		return;
+	}
 
-	let manager = new CommandManager(context);
-
+	// Initialize command manager
+	const manager = new CommandManager(context);
+	
+	// Register commands
 	context.subscriptions.push(
-		vscode.commands.registerCommand('crabviz.generateCallGraph', manager.generateCallGraph.bind(manager)),
-		vscode.commands.registerTextEditorCommand('crabviz.generateFuncCallGraph', manager.generateFuncCallGraph.bind(manager)),
-		vscode.commands.registerCommand('crabviz.exportCallGraph', () => {
+		vscode.commands.registerCommand('codetwin.generateCallGraph', manager.generateCallGraph.bind(manager)),
+		vscode.commands.registerTextEditorCommand('codetwin.generateFuncCallGraph', manager.generateFuncCallGraph.bind(manager)),
+		vscode.commands.registerCommand('codetwin.exportCallGraph', () => {
 			CallGraphPanel.currentPanel?.exportSVG();
-		}),
+		})
 	);
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+    // Clean up resources
+}

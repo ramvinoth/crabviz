@@ -68,6 +68,7 @@ class CallGraph {
    * @param {boolean} focusMode
    */
   constructor(svg, focusMode) {
+    console.log('[Graph] Initializing CallGraph, focusMode:', focusMode);
     this.svg = svg;
     this.edges = svg.querySelectorAll("g.edge");
     this.nodes = svg.querySelectorAll("g.node");
@@ -75,12 +76,14 @@ class CallGraph {
   }
 
   activate() {
+    console.log('[Graph] Activating graph');
     this.processSVG();
     this.addGraphicalObjects();
     this.addListeners();
   }
 
   processSVG() {
+    console.log('[Graph] Processing SVG');
     this.edges.forEach(edge => forEachSelectedChild(edge, "path", (path) => {
       let newPath = path.cloneNode();
       newPath.classList.add("hover-path");
@@ -107,6 +110,7 @@ class CallGraph {
     });
 
     if (this.focusMode) {
+      console.log('[Graph] Applying focus mode');
       this.focus = this.svg.querySelector(".highlight").id;
       this.incomings = new Map();
       this.outgoings = new Map();
@@ -137,6 +141,7 @@ class CallGraph {
   }
 
   addGraphicalObjects() {
+    console.log('[Graph] Adding graphical objects');
     let defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
     defs.innerHTML = '<filter id="shadow"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-opacity="0.5"></filter>';
 
@@ -144,16 +149,19 @@ class CallGraph {
   }
 
   addListeners() {
+    console.log('[Graph] Adding listeners');
     const delta = 6;
     let startX;
     let startY;
 
     this.svg.addEventListener('mousedown', (event) => {
+      console.log('[Graph] Mouse down event');
       startX = event.pageX;
       startY = event.pageY;
     });
 
     this.svg.addEventListener("mouseup", (event) => {
+      console.log('[Graph] Mouse up event');
       const diffX = Math.abs(event.pageX - startX);
       const diffY = Math.abs(event.pageY - startY);
 
@@ -175,12 +183,15 @@ class CallGraph {
 
       switch (elemType) {
         case GraphElemType.NODE:
+          console.log('[Graph] Selecting node');
           this.onSelectNode(elem);
           break;
         case GraphElemType.CELL:
+          console.log('[Graph] Selecting cell');
           this.onSelectCell(elem);
           break;
         case GraphElemType.EDGE:
+          console.log('[Graph] Selecting edge');
           this.onSelectEdge(elem);
           break;
       }
@@ -191,6 +202,7 @@ class CallGraph {
    * Deselect all elements
    */
   reset() {
+    console.log('[Graph] Resetting graph');
     this.nodes.forEach(node => {
       node.classList.remove("selected");
       forEachSelectedChild(node, "g.cell.selected", (elem) => {
@@ -204,6 +216,7 @@ class CallGraph {
    * @param {SVGGElement} edge
    */
   onSelectEdge(edge) {
+    console.log('[Graph] Selecting edge');
     this.edges.forEach(e => {
       if (e !== edge) {
         e.classList.add("fade");
@@ -215,6 +228,7 @@ class CallGraph {
    * @param {SVGGElement} cell
    */
   onSelectCell(cell) {
+    console.log('[Graph] Selecting cell');
     if (!cell.classList.contains("clickable")) {
       return;
     }
@@ -222,6 +236,7 @@ class CallGraph {
     const id = cell.id;
 
     if (this.focus) {
+      console.log('[Graph] Highlighting edge in focus mode');
       this.highlightEdgeInFocusMode(id);
     } else {
       this.edges.forEach(edge => {
@@ -249,6 +264,7 @@ class CallGraph {
    * @param {SVGGElement} node
    */
   onSelectNode(node) {
+    console.log('[Graph] Selecting node');
     const id = node.id;
 
     this.edges.forEach(edge => {
@@ -276,6 +292,7 @@ class CallGraph {
    * @returns {SVGGElement}
    */
   findNearestGraphElem(elem) {
+    console.log('[Graph] Finding nearest graph element');
     while (elem && elem !== this.svg) {
       for (let i = 0; i < elem.classList.length; ++i) {
         let cls = elem.classList.item(i);
@@ -305,6 +322,7 @@ class CallGraph {
    * @param {string} cellId
    */
   highlightEdgeInFocusMode(cellId) {
+    console.log('[Graph] Highlighting edge in focus mode');
     let incomings = new Set();
     let outgoings = new Set();
     let visited1 = new Set([cellId, this.focus]);

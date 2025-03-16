@@ -3,7 +3,6 @@
 'use strict';
 
 const path = require('path');
-const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
@@ -26,7 +25,11 @@ const extensionConfig = {
   },
   resolve: {
     // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
-    extensions: ['.ts', '.js']
+    extensions: ['.ts', '.js'],
+    alias: {
+      // Map the codetwin import to the actual source files
+      'codetwin': path.resolve(__dirname, '../../src')
+    }
   },
   module: {
     rules: [
@@ -35,7 +38,12 @@ const extensionConfig = {
         exclude: /node_modules/,
         use: [
           {
-            loader: 'ts-loader'
+            loader: 'ts-loader',
+            options: {
+              // Handle project references
+              projectReferences: true,
+              configFile: path.resolve(__dirname, './tsconfig.json')
+            }
           }
         ]
       }
@@ -46,16 +54,11 @@ const extensionConfig = {
     level: "log", // enables logging required for problem matchers
   },
   plugins: [
-    new WasmPackPlugin({
-      crateDirectory: path.resolve(__dirname, '../..'),
-      outDir: path.resolve(__dirname, 'crabviz'),
-      extraArgs: '--target=web --features vscode',
-      forceMode: 'production',
-    }),
   ],
   experiments: {
     futureDefaults: true,
     topLevelAwait: true,
   }
 };
+
 module.exports = [ extensionConfig ];

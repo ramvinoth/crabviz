@@ -1,4 +1,4 @@
-//! Some Language Server Protocol types used in crabviz, copied from gluon-lang/lsp-types with some modifications.
+//! Some Language Server Protocol types used in codetwin, copied from gluon-lang/lsp-types with some modifications.
 
 use {serde::Deserialize, serde_json::Value, serde_repr::Deserialize_repr};
 

@@ -1,0 +1,69 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "npm",
+			"script": "compile",
+			"path": "editors/code",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: compile - editors/code",
+			"detail": "webpack"
+		},
+		{
+			"type": "npm",
+			"script": "build",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: build",
+			"detail": "tsc -p tsconfig.json"
+		},
+		{
+			"type": "npm",
+			"script": "watch",
+			"path": "editors/code",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: watch - editors/code",
+			"detail": "webpack --watch"
+		},
+		{
+			"type": "npm",
+			"script": "package",
+			"path": "editors/code",
+			"problemMatcher": [],
+			"label": "npm: package - editors/code",
+			"detail": "webpack --mode production --devtool hidden-source-map"
+		},
+		{
+			"type": "npm",
+			"script": "package",
+			"problemMatcher": [],
+			"label": "npm: package",
+			"detail": "vsce package"
+		},
+		{
+			"type": "npm",
+			"script": "vscode:prepublish",
+			"path": "editors/code",
+			"problemMatcher": [],
+			"label": "npm: vscode:prepublish - editors/code",
+			"detail": "npm run package"
+		},
+		{
+			"type": "npm",
+			"script": "vscode:prepublish",
+			"problemMatcher": [],
+			"label": "npm: vscode:prepublish",
+			"detail": "npm run package"
+		},
+		{
+			"type": "npm",
+			"script": "watch",
+			"group": "build",
+			"problemMatcher": [],
+			"label": "npm: watch",
+			"detail": "tsc -watch -p ./"
+		}
+	]
+}

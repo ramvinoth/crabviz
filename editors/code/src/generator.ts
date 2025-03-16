@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { instance as vizInstance } from '@viz-js/viz';
 
 import { retryCommand } from './utils/command';
-import { GraphGenerator } from '../crabviz';
+import { GraphGenerator } from '../../../src/generator';
 import { Ignore } from 'ignore';
 import * as path from "path";
 
@@ -27,9 +27,12 @@ export class Generator {
     progress: vscode.Progress<{ message?: string; increment?: number }>,
     token: vscode.CancellationToken,
   ): Promise<string> {
+    console.log('[Generator] Starting generateCallGraph with files:', files.map(f => f.fsPath));
+    
     files.sort((f1, f2) => f2.path.split('/').length - f1.path.split('/').length);
 
     const funcMap = new Map<string, Set<string>>(files.map(f => [normalizedPath(f.path), new Set()]));
+    console.log('[Generator] Initialized funcMap:', Array.from(funcMap.keys()));
 
     let finishedCount = 0;
     progress.report({ message: `${finishedCount} / ${files.length}` });
@@ -39,6 +42,7 @@ export class Generator {
         return "";
       }
 
+      console.log('[Generator] Processing file:', file.path);
       // retry several times if the LSP server is not ready
       let symbols = await retryCommand<vscode.DocumentSymbol[]>(5, 600, 'vscode.executeDocumentSymbolProvider', file);
       if (symbols === undefined) {
@@ -47,8 +51,11 @@ export class Generator {
       }
 
       const filePath = normalizedPath(file.path);
+      console.log('[Generator] Normalized path:', filePath);
+      console.log('[Generator] Adding file to inner generator');
 
-      if (!this.inner.add_file(filePath, symbols)) {
+      if (!this.inner.addFile(filePath, symbols)) {
+        console.warn('[Generator] Failed to add file to generator:', filePath);
         finishedCount += 1;
         progress.report({ message: `${finishedCount} / ${files.length}`, increment: 100 / files.length });
         continue;
@@ -61,45 +68,45 @@ export class Generator {
           }
 
           const symbolStart = symbol.selectionRange.start;
-
+        
           if (FUNC_KINDS.includes(symbol.kind) && !hasFunc(funcMap, filePath, symbolStart)) {
             let items: vscode.CallHierarchyItem[];
             try {
               items = await vscode.commands.executeCommand<vscode.CallHierarchyItem[]>('vscode.prepareCallHierarchy', file, symbolStart);
             } catch (e) {
               vscode.window.showErrorMessage(`${e}\n${file}\n${symbol.name}`);
-              continue;
-            }
+            continue;
+          }
 
-            for await (const item of items) {
-              await this.resolveCallsInFiles(item, funcMap);
-            }
-          } else if (symbol.kind === vscode.SymbolKind.Interface) {
+          for await (const item of items) {
+            await this.resolveCallsInFiles(item, funcMap);
+          }
+        } else if (symbol.kind === vscode.SymbolKind.Interface) {
             await vscode.commands.executeCommand<vscode.Location[] | vscode.LocationLink[]>('vscode.executeImplementationProvider', file, symbol.selectionRange.start)
               .then(result => {
                 if (result.length <= 0) {
-                  return;
-                }
+              return;
+            }
 
-                let locations: vscode.Location[];
-                if (!(result[0] instanceof vscode.Location)) {
-                  locations = result.map(l => {
-                    let link = l as vscode.LocationLink;
+            let locations: vscode.Location[];
+            if (!(result[0] instanceof vscode.Location)) {
+              locations = result.map(l => {
+                let link = l as vscode.LocationLink;
                     return new vscode.Location(link.targetUri, link.targetSelectionRange ?? link.targetRange);
-                  });
-                } else {
-                  locations = result as vscode.Location[];
-                }
-
-                if (isWindows) {
-                  locations.forEach(l => l.uri = l.uri.with({ path: normalizedPath(l.uri.path )}));
-                }
-
-                this.inner.add_interface_implementations(filePath, symbol.selectionRange.start, locations);
-              })
-              .then(undefined, err => {
-                console.log(err);
               });
+            } else {
+              locations = result as vscode.Location[];
+            }
+
+            if (isWindows) {
+              locations.forEach(l => l.uri = l.uri.with({ path: normalizedPath(l.uri.path )}));
+            }
+
+            this.inner.addInterfaceImplementations(filePath, symbol.selectionRange.start, locations);
+          })
+          .then(undefined, err => {
+            console.log(err);
+          });
           }
         }
 
@@ -110,7 +117,40 @@ export class Generator {
       progress.report({ message: `${finishedCount} / ${files.length}`, increment: 100 / files.length });
     }
 
-    const dot = this.inner.generate_dot_source();
+    const dot = this.inner.generateDotSource();
+
+    try {
+      // Create output directory if it doesn't exist
+      const outputDir = vscode.Uri.joinPath(vscode.Uri.parse(this.root), '.codetwin');
+      try {
+        await vscode.workspace.fs.createDirectory(outputDir);
+      } catch (err) {
+        // Directory might already exist, ignore error
+      }
+
+      // Generate timestamp-based filename
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const dotFileName = `graph_${timestamp}.dot`;
+      const dotUri = vscode.Uri.joinPath(outputDir, dotFileName);
+
+      // Write DOT file
+      await vscode.workspace.fs.writeFile(dotUri, Buffer.from(dot, 'utf8'));
+      console.log('[Generator] Saved DOT file:', dotUri.fsPath);
+
+      // Show success message with file location
+      vscode.window.showInformationMessage(
+        `DOT file saved: ${vscode.workspace.asRelativePath(dotUri)}`,
+        'Open File'
+      ).then(selection => {
+        if (selection === 'Open File') {
+          vscode.workspace.openTextDocument(dotUri)
+            .then(doc => vscode.window.showTextDocument(doc));
+        }
+      });
+    } catch (error) {
+      console.error('[Generator] Failed to save DOT file:', error);
+      vscode.window.showErrorMessage(`Failed to save DOT file: ${error}`);
+    }
 
     return await viz.then(viz => viz.renderString(dot, renderOptions));
   }
@@ -149,14 +189,14 @@ export class Generator {
       const funcs = file.sortedFuncs().filter(rng => !rng.isEmpty);
       symbols = this.filterSymbols(symbols, funcs);
 
-      this.inner.add_file(normalizedPath(file.uri.path), symbols);
+      this.inner.addFile(normalizedPath(file.uri.path), symbols);
     }
 
     for await (const item of items) {
       this.inner.highlight(normalizedPath(item.uri.path), item.selectionRange.start);
     }
 
-    const dot = this.inner.generate_dot_source();
+    const dot = this.inner.generateDotSource();
 
     return await viz.then(viz => viz.renderString(dot, renderOptions));
   }
@@ -195,7 +235,7 @@ export class Generator {
         const symbolStart = item.selectionRange.start;
 
         const itemNormalizedPath = normalizedPath(item.uri.path);
-        this.inner.add_incoming_calls(itemNormalizedPath, symbolStart, calls);
+        this.inner.addIncomingCalls(itemNormalizedPath, symbolStart, calls);
         funcMap.get(itemNormalizedPath)?.add(keyFromPosition(symbolStart));
 
         calls = calls
@@ -221,7 +261,7 @@ export class Generator {
         }
 
         const itemNormalizedPath = normalizedPath(item.uri.path);
-        this.inner.add_incoming_calls(itemNormalizedPath, item.selectionRange.start, calls);
+        this.inner.addIncomingCalls(itemNormalizedPath, item.selectionRange.start, calls);
         funcMap.get(itemNormalizedPath)!.visitFunc(item.selectionRange, FuncCallDirection.INCOMING);
 
         calls = calls
@@ -231,7 +271,7 @@ export class Generator {
             let file = funcMap.get(uri.path);
             if (!file) {
               file = new VisitedFile(uri);
-              file.skip = ig.ignores(path.posix.relative(this.root, uri.path)) || this.inner.should_filter_out_file(uri.path);
+              file.skip = ig.ignores(path.posix.relative(this.root, uri.path)) || this.inner.shouldFilterOutFile(uri.path);
               funcMap.set(uri.path, file);
             }
 
@@ -255,7 +295,7 @@ export class Generator {
         }
 
         const itemNormalizedPath = normalizedPath(item.uri.path);
-        this.inner.add_outgoing_calls(itemNormalizedPath, item.selectionRange.start, calls);
+        this.inner.addOutgoingCalls(itemNormalizedPath, item.selectionRange.start, calls);
         funcMap.get(itemNormalizedPath)!.visitFunc(item.selectionRange, FuncCallDirection.OUTGOING);
 
         calls = calls
@@ -269,7 +309,7 @@ export class Generator {
             let file = funcMap.get(uri.path);
             if (!file) {
               file = new VisitedFile(uri);
-              file.skip = ig.ignores(path.posix.relative(this.root, uri.path)) || this.inner.should_filter_out_file(uri.path);
+              file.skip = ig.ignores(path.posix.relative(this.root, uri.path)) || this.inner.shouldFilterOutFile(uri.path);
               funcMap.set(uri.path, file);
             }
 

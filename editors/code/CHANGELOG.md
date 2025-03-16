@@ -20,7 +20,7 @@
 
 ### Fixed
 
-* Error in language detection ([#25](https://github.com/chanhx/crabviz/issues/25))
+* Error in language detection ([#25](https://github.com/ramvinoth/codetwin/issues/25))
 
 
 ## 0.3.1 (2023.12.24)

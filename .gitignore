@@ -1,1 +1,10 @@
 /target
+node_modules
+out
+dist
+editors/code/out
+editors/code/dist
+editors/web/out
+editors/web/dist
+editors/web/node_modules
+editors/web/node_modules

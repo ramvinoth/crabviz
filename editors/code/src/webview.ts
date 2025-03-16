@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 export class CallGraphPanel {
-	public static readonly viewType = 'crabviz.callgraph';
+	public static readonly viewType = 'codetwin.callgraph';
 
 	public static currentPanel: CallGraphPanel | null = null;
 	private static num = 1;
@@ -13,7 +13,7 @@ export class CallGraphPanel {
 	public constructor(extensionUri: vscode.Uri) {
 		this._extensionUri = extensionUri;
 
-		const panel = vscode.window.createWebviewPanel(CallGraphPanel.viewType, `Crabviz #${CallGraphPanel.num}`, vscode.ViewColumn.One, {
+		const panel = vscode.window.createWebviewPanel(CallGraphPanel.viewType, `CodeTwin #${CallGraphPanel.num}`, vscode.ViewColumn.One, {
 			localResourceRoots: [
 				vscode.Uri.joinPath(this._extensionUri, 'media')
 			],
@@ -87,12 +87,12 @@ export class CallGraphPanel {
 					<meta charset="UTF-8">
 					<meta http-equiv="Content-Security-Policy" content="script-src 'nonce-${nonce}';">
 					<meta name="viewport" content="width=device-width, initial-scale=1.0">
-					<style id="crabviz_style">
+					<style id="codetwin_style">
 						${cssVariables.toString()}
 						${cssStyles.toString()}
 					</style>
 					${scripts.map((s) => `<script nonce="${nonce}">${s.toString()}</script>`)}
-					<title>crabviz</title>
+					<title>CodeTwin</title>
 			</head>
 			<body data-vscode-context='{ "preventDefaultContextMenuItems": true }'>
 					${svg}
